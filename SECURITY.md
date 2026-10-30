@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Security fixes target the latest 2.x version. Older major versions are not
+Security fixes target the latest 1.x version. Older major versions are not
 maintained. Keep Repowise and MarkItDown up to date as well as this plugin.
 
 ## Reporting a vulnerability

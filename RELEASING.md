@@ -8,7 +8,7 @@ Bump PATCH for compatible fixes, MINOR for compatible features and MAJOR for bre
 changes. While the project is at 0.x, minor versions may introduce breaking changes.
 Run `uv lock` after changing the version so the locked local package stays consistent.
 
-Release tags must be exactly `v` followed by that version, for example `v2.0.0`.
+Release tags must be exactly `v` followed by that version, for example `v1.0.0`.
 The validation helper checks both archive filenames and their embedded package
 metadata against `pyproject.toml`. No second runtime version constant is maintained.
 
@@ -82,7 +82,7 @@ PyPI publishing step. Use `gh` authentication to download the packages
 rather than embedding tokens in installation URLs:
 
 ```sh
-VERSION=2.0.0 # Example only; choose an existing reviewed release.
+VERSION=1.0.0 # Example only; choose an existing reviewed release.
 gh release download "v$VERSION" \
   --repo digimangos/repowise-markitdown-plugin \
   --pattern '*.whl' --pattern '*.tar.gz' --pattern SHA256SUMS \
@@ -98,7 +98,7 @@ python -m pip install ./repowise_markitdown-*.whl
 repowise plugins
 ```
 
-Version 2 integrates with Repowise's document-extractor seam. Use a Repowise
+This plugin integrates with Repowise's document-extractor seam. Use a Repowise
 version that provides that seam; installing the wheel cannot add it to an older
 host. See [README](README.md#requirements) for requirements and migration guidance.
 
@@ -132,7 +132,7 @@ uv run ruff check .
 uv run ruff format --check .
 uv build
 uv run python scripts/validate_release.py --dist dist
-uv run python scripts/validate_release.py --tag v2.0.0 --dist dist
+uv run python scripts/validate_release.py --tag v1.0.0 --dist dist
 ```
 
 Replace the example tag with the current declared version. Invalid tags and

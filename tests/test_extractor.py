@@ -76,12 +76,12 @@ def test_converter_disables_other_formats_and_plugins(monkeypatch):
 def test_cache_version_tracks_plugin_and_converter(monkeypatch):
     from repowise_markitdown import extractor
 
-    versions = {"repowise-markitdown": "2.0.0", "markitdown": "0.1.9"}
+    versions = {"repowise-markitdown": "1.0.0", "markitdown": "0.1.9"}
     monkeypatch.setattr(extractor, "version", versions.__getitem__)
     first = PdfDocumentExtractor().version
     versions["markitdown"] = "0.1.10"
     second = PdfDocumentExtractor().version
-    versions["repowise-markitdown"] = "2.0.1"
+    versions["repowise-markitdown"] = "1.0.1"
     assert first != second != PdfDocumentExtractor().version
 
 

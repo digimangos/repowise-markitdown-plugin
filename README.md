@@ -109,17 +109,18 @@ flowchart LR
 | The host owns cache lifecycle and incremental detection. | There is no plugin-side cache manifest or converter-only refresh command. Rebuild the index when changing extractor versions if an ordinary update has no source changes to process. |
 | Other extractors can claim `.pdf`. | The host's later-registered claim wins; check `repowise plugins` if the expected converter is not used. |
 
-## Migrating from 1.x
+## Migrating from the legacy wrapper
 
-This major version removes the `ingest-pdfs` wrapper and the experimental
-repository-preprocessor registration. Use plain Repowise commands with the new
+This repository's first release uses native extraction rather than the legacy
+`ingest-pdfs` wrapper or experimental repository-preprocessor registration.
+Use plain Repowise commands with the
 document-extractor seam instead.
 
 Before rebuilding, back up and move old `.repowise-pdfs/` or `docs/repowise-pdfs/`
 output trees, including their manifests, **outside the repository**. Preserve local
 edits; do not delete the original PDFs. Old Markdown remains ordinary indexable
 content if left in place, so retaining it would duplicate document entries.
-The plugin does not automatically move or delete files from earlier versions.
+The plugin does not automatically move or delete files from legacy installations.
 Remove committed generated files through your normal Git workflow, then run:
 
 ```sh

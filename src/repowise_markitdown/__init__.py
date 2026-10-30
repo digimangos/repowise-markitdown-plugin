@@ -6,9 +6,8 @@ def register() -> None:
         from repowise.core.ingestion.document_extractors import document_extractors
     except ImportError as exc:
         raise RuntimeError(
-            "repowise-markitdown 2 requires Repowise's document-extractor seam. "
-            "Install the compatible host described in the README; published "
-            "Repowise 0.59.0 does not provide this API."
+            "repowise-markitdown requires Repowise's document-extractor seam. "
+            "Install a compatible Repowise version as described in the README."
         ) from exc
 
     from .extractor import PdfDocumentExtractor
