@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement to the plugin.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Explain what you cannot do today and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change and alternatives
+      description: Include expected behaviour, alternatives and any trade-offs.
+    validations:
+      required: true

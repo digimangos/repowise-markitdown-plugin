@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repowise-markitdown"
+version = "2.0.0"
+description = "In-memory PDF document extraction for Repowise"
+license = "ISC"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "repowise>=0.59,<0.60",
+    "markitdown[all]>=0.1.9,<0.2",
+    # MarkItDown's all extra requires this prerelease; make it explicit for uv.
+    "azure-ai-contentunderstanding>=1.2.0b1,<2",
+]
+
+[project.urls]
+Homepage = "https://github.com/digimangos/repowise-markitdown-plugin"
+Repository = "https://github.com/digimangos/repowise-markitdown-plugin.git"
+Issues = "https://github.com/digimangos/repowise-markitdown-plugin/issues"
+Changelog = "https://github.com/digimangos/repowise-markitdown-plugin/releases"
+
+[project.entry-points."repowise.plugins"]
+markitdown = "repowise_markitdown:register"
+
+[dependency-groups]
+dev = ["pytest>=8,<9", "ruff>=0.11,<1"]
+
+[tool.uv.sources]
+repowise = { git = "https://github.com/digimangos/repowise.git", rev = "aa3e7b1d17c31b87e6b9aea3258b9ad8f46a5695" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repowise_markitdown"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
