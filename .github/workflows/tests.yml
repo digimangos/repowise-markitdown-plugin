@@ -4,11 +4,46 @@ on:
   push:
   pull_request:
   workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
 
 permissions:
   contents: read
 
 jobs:
+  latest-repowise:
+    name: Synthetic integration with latest Repowise (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v7.0.1
+        with:
+          repository: repowise-dev/repowise
+          ref: main
+          path: .repowise-host
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.2
+      - name: Record upstream revision
+        run: git -C .repowise-host log -1 --format='%H %s'
+      - name: Build plugin wheel and install latest host
+        run: |
+          uv build --wheel --out-dir "$RUNNER_TEMP/plugin-dist"
+          uv venv --python 3.13 "$RUNNER_TEMP/integration-venv"
+          uv pip install --python "$RUNNER_TEMP/integration-venv/bin/python" \
+            ./.repowise-host "$RUNNER_TEMP"/plugin-dist/*.whl "pytest>=8,<9"
+      - name: Verify plugin discovery and synthetic PDF/code integration
+        env:
+          REPOWISE_SKIP_EDITOR_SETUP: "1"
+        run: |
+          "$RUNNER_TEMP/integration-venv/bin/repowise" plugins
+          "$RUNNER_TEMP/integration-venv/bin/python" -m pytest \
+            tests/test_extractor.py tests/test_indexing.py \
+            --basetemp "$RUNNER_TEMP/synthetic-repositories" -v
+
   test:
     runs-on: ubuntu-latest
     concurrency:

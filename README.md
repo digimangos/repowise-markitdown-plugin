@@ -137,6 +137,13 @@ Replace any custom hook or automation that invokes `ingest-pdfs` with plain
 development and CI, including real spawned-worker discovery. This development
 pin is not embedded in wheel dependency metadata.
 
+Linux CI also builds and installs the plugin wheel alongside the latest
+`repowise-dev/repowise` `main` code. Its synthetic Git repositories contain PDFs
+(including uppercase extensions and duplicate basenames), Python and JavaScript.
+The tests exercise spawned extraction, cached source reads, plain CLI init,
+committed updates and deletion without Markdown sidecars. This compatibility
+check runs on pushes, pull requests and daily to catch upstream changes.
+
 ```sh
 uv sync --locked --group dev
 uv run pytest

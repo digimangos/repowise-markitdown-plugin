@@ -3530,7 +3530,7 @@ wheels = [
 [[package]]
 name = "repowise"
 version = "0.59.0"
-source = { git = "https://github.com/digimangos/repowise.git?rev=aa3e7b1d17c31b87e6b9aea3258b9ad8f46a5695#aa3e7b1d17c31b87e6b9aea3258b9ad8f46a5695" }
+source = { git = "https://github.com/repowise-dev/repowise.git?rev=3dacea6a27758a139b2283a35b601bc97226ea9e#3dacea6a27758a139b2283a35b601bc97226ea9e" }
 dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
@@ -3609,7 +3609,7 @@ dev = [
 requires-dist = [
     { name = "azure-ai-contentunderstanding", specifier = ">=1.2.0b1,<2" },
     { name = "markitdown", extras = ["all"], specifier = ">=0.1.9,<0.2" },
-    { name = "repowise", git = "https://github.com/digimangos/repowise.git?rev=aa3e7b1d17c31b87e6b9aea3258b9ad8f46a5695" },
+    { name = "repowise", git = "https://github.com/repowise-dev/repowise.git?rev=3dacea6a27758a139b2283a35b601bc97226ea9e" },
 ]
 
 [package.metadata.requires-dev]

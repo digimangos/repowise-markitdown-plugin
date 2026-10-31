@@ -30,7 +30,7 @@ markitdown = "repowise_markitdown:register"
 dev = ["pytest>=8,<9", "ruff>=0.11,<1"]
 
 [tool.uv.sources]
-repowise = { git = "https://github.com/digimangos/repowise.git", rev = "aa3e7b1d17c31b87e6b9aea3258b9ad8f46a5695" }
+repowise = { git = "https://github.com/repowise-dev/repowise.git", rev = "3dacea6a27758a139b2283a35b601bc97226ea9e" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/repowise_markitdown"]
