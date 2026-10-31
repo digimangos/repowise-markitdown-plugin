@@ -52,9 +52,33 @@ def test_invalid_pdf_fails():
         PdfDocumentExtractor().extract(Path("guide.pdf"), b"invalid PDF")
 
 
-def test_empty_pdf_reports_ocr_requirement():
+def test_empty_pdf_returns_notice_with_source_path(monkeypatch):
+    monkeypatch.delenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", raising=False)
+    text = PdfDocumentExtractor().extract(Path("documents/guide.pdf"), make_pdf(""))
+    assert "# PDF text unavailable" in text
+    assert "Source file: documents/guide.pdf" in text
+    assert "OCR" in text
+
+
+@pytest.mark.parametrize("policy", ["true", "1", " TRUE "])
+def test_strict_empty_pdf_reports_ocr_requirement(monkeypatch, policy):
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", policy)
     with pytest.raises(ValueError, match="No text extracted.*OCR"):
         PdfDocumentExtractor().extract(Path("guide.pdf"), make_pdf(""))
+
+
+@pytest.mark.parametrize("policy", ["false", "0", " FALSE "])
+def test_empty_pdf_policy_is_part_of_cache_identity(monkeypatch, policy):
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", policy)
+    notice_version = PdfDocumentExtractor().version
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", "true")
+    assert PdfDocumentExtractor().version != notice_version
+
+
+def test_invalid_empty_pdf_policy_is_rejected(monkeypatch):
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", "typo")
+    with pytest.raises(ValueError, match="REPOWISE_MARKITDOWN_FAIL_ON_EMPTY"):
+        PdfDocumentExtractor()
 
 
 def test_converter_disables_other_formats_and_plugins(monkeypatch):

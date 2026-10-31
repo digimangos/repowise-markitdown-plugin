@@ -69,6 +69,21 @@ extractor. Plain `init`/`update` require no separate conversion command.
 `--no-prose` and `--index-only` avoid LLM documentation generation, not PDF extraction.
 The host controls dry-run behaviour, file discovery and exclusions.
 
+When a valid PDF yields no text, the plugin returns a Markdown notice containing
+the source file path and a suggestion to try OCR. This notice is indexed content,
+not extracted PDF content. To fail instead:
+
+```sh
+REPOWISE_MARKITDOWN_FAIL_ON_EMPTY=true repowise update --index-only
+```
+
+The variable defaults to `false`; `true`/`1` enable strict mode and `false`/`0`
+enable the notice (case-insensitive). Invalid values are rejected. Malformed PDFs
+and converter errors always fail. The resolved policy is included in the
+extractor's version so strict mode cannot reuse a cached notice. Rebuild with
+`repowise init --force --yes --no-prose` after changing policy if an ordinary
+update has no source changes to process.
+
 For `documents/guide.pdf`, graph entries use **`documents/guide.pdf`**, not a
 generated Markdown path. PDFs with the same basename in different directories
 remain distinct. The extractor reads the supplied bytes, not the live path,
@@ -79,9 +94,11 @@ so historical snapshots are not accidentally replaced with current file content.
 1. Repowise discovers eligible files and routes unsupported `.pdf` extensions
    through the registered document extractor. Existing code parsers take precedence.
 2. The host checks its parse cache using original source bytes plus extractor
-   identity/version. The plugin version includes both plugin and MarkItDown versions.
+   identity/version. The plugin version includes plugin and MarkItDown versions
+   and the resolved fail-on-empty policy.
 3. On a cache miss, a host-managed spawned worker converts the supplied PDF bytes
-   to Markdown in memory. Malformed or empty extraction fails explicitly.
+   to Markdown in memory. Empty text becomes an OCR notice unless strict mode
+   is enabled. Malformed PDFs and converter errors fail explicitly.
 4. Repowise parses and indexes that text under the original PDF path, retaining
    extracted content in its internal cache rather than repository-side copies.
    The host also uses the seam when serving extracted document text to consumers.
@@ -92,7 +109,12 @@ flowchart LR
     PDF --> Cache{Host parse cache}
     Cache -->|Miss| Worker[Bounded extraction worker]
     Worker --> MarkItDown[MarkItDown PDF converter]
-    MarkItDown --> Text[In-memory Markdown]
+    MarkItDown --> Empty{Empty text?}
+    Empty -->|No| Text[In-memory Markdown]
+    Empty -->|Yes| Policy{Fail-on-empty?}
+    Policy -->|No| Notice[OCR notice with source path]
+    Notice --> Text
+    Policy -->|Yes| Error[Extraction failure]
     Text --> Parser[Existing Markdown parser]
     Cache -->|Hit| Index[Graph and content under original PDF path]
     Parser --> Index
@@ -104,7 +126,7 @@ flowchart LR
 | --- | --- |
 | Requires Repowise's document-extractor seam. | Upgrade older hosts before installing this plugin; the plugin cannot add the seam to Repowise. |
 | This is text extraction, not native PDF knowledge extraction. | There is no PDF-specific entity model, semantic relationship extraction or original page-level citation mapping. Line numbers refer to extracted text, not PDF page coordinates. |
-| Scanned/image-only PDFs need separate OCR. | Empty extraction fails rather than silently creating a successful empty document. |
+| Scanned/image-only PDFs need separate OCR. | Empty extraction returns an indexed OCR notice with the source path by default. Set `REPOWISE_MARKITDOWN_FAIL_ON_EMPTY=true` to fail instead. |
 | Host discovery, source/output size limits, timeout and worker policies apply. | Ignored or oversized PDFs can be excluded even when their extracted text is small. Check your Repowise version's limits and indexing output. The plugin does not override host policy. |
 | The host owns cache lifecycle and incremental detection. | There is no plugin-side cache manifest or converter-only refresh command. Rebuild the index when changing extractor versions if an ordinary update has no source changes to process. |
 | Other extractors can claim `.pdf`. | The host's later-registered claim wins; check `repowise plugins` if the expected converter is not used. |
