@@ -144,10 +144,32 @@ def test_plain_init_update_and_deletion_use_original_pdf_paths(repository, tmp_p
 
 
 @pytest.mark.parametrize("data", [b"not a PDF", make_pdf("")])
-def test_extraction_failure_names_plugin_and_source(repository, data):
+def test_extraction_failure_names_plugin_and_source(repository, data, monkeypatch):
     from repowise.core.ingestion.document_extractors import DocumentExtractionError
 
+    from repowise_markitdown import register
+
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", "true")
+    register()
     (repository / "broken.pdf").write_bytes(data)
     with pytest.raises(DocumentExtractionError, match=r"markitdown.*broken\.pdf"):
         _ingest(repository)
     assert not list(repository.rglob("*.md"))
+
+
+def test_strict_policy_does_not_reuse_cached_empty_notice(repository, monkeypatch):
+    from repowise.core.ingestion.document_extractors import DocumentExtractionError
+
+    from repowise_markitdown import register
+
+    monkeypatch.delenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", raising=False)
+    register()
+    (repository / "scanned.pdf").write_bytes(make_pdf(""))
+    _parsed, _infos, _structure, sources, *_ = _ingest(repository)
+    assert b"PDF text unavailable" in sources["scanned.pdf"]
+    assert b"scanned.pdf" in sources["scanned.pdf"]
+
+    monkeypatch.setenv("REPOWISE_MARKITDOWN_FAIL_ON_EMPTY", "true")
+    register()
+    with pytest.raises(DocumentExtractionError, match=r"markitdown.*scanned\.pdf"):
+        _ingest(repository)
