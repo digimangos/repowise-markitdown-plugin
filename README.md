@@ -109,33 +109,18 @@ flowchart LR
 | The host owns cache lifecycle and incremental detection. | There is no plugin-side cache manifest or converter-only refresh command. Rebuild the index when changing extractor versions if an ordinary update has no source changes to process. |
 | Other extractors can claim `.pdf`. | The host's later-registered claim wins; check `repowise plugins` if the expected converter is not used. |
 
-## Migrating from the legacy wrapper
-
-This repository's first release uses native extraction rather than the legacy
-`ingest-pdfs` wrapper or experimental repository-preprocessor registration.
-Use plain Repowise commands with the
-document-extractor seam instead.
-
-Before rebuilding, back up and move old `.repowise-pdfs/` or `docs/repowise-pdfs/`
-output trees, including their manifests, **outside the repository**. Preserve local
-edits; do not delete the original PDFs. Old Markdown remains ordinary indexable
-content if left in place, so retaining it would duplicate document entries.
-The plugin does not automatically move or delete files from legacy installations.
-Remove committed generated files through your normal Git workflow, then run:
-
-```sh
-repowise init --force --yes --no-prose
-```
-
-Verify graph results reference the original PDF paths before discarding backups.
-Replace any custom hook or automation that invokes `ingest-pdfs` with plain
-`repowise update`. No generated Markdown needs to be committed or kept visible.
-
 ## Development and builds
 
 `uv.lock` and `tool.uv.sources` pin a compatible Repowise revision for reproducible
 development and CI, including real spawned-worker discovery. This development
 pin is not embedded in wheel dependency metadata.
+
+Linux CI also builds and installs the plugin wheel alongside the latest
+`repowise-dev/repowise` `main` code. Its synthetic Git repositories contain PDFs
+(including uppercase extensions and duplicate basenames), Python and JavaScript.
+The tests exercise spawned extraction, cached source reads, plain CLI init,
+committed updates and deletion without Markdown sidecars. This compatibility
+check runs on pushes, pull requests and daily to catch upstream changes.
 
 ```sh
 uv sync --locked --group dev

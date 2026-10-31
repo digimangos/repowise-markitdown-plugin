@@ -100,7 +100,7 @@ repowise plugins
 
 This plugin integrates with Repowise's document-extractor seam. Use a Repowise
 version that provides that seam; installing the wheel cannot add it to an older
-host. See [README](README.md#requirements) for requirements and migration guidance.
+host. See [README](README.md#requirements) for requirements.
 
 Alternatively, for a uv-managed Repowise tool installation:
 

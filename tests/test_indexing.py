@@ -26,7 +26,7 @@ def _ingest(repository):
 
 
 def test_real_spawn_extraction_and_host_cache(repository, monkeypatch):
-    from repowise.core.ingestion import document_extractors as seam
+    from repowise.core.ingestion import source_reader
 
     pdf = repository / "guide.PDF"
     pdf.write_bytes(make_pdf("Original document"))
@@ -34,22 +34,24 @@ def test_real_spawn_extraction_and_host_cache(repository, monkeypatch):
     document = next(item for item in parsed if item.file_info.path == "guide.PDF")
     assert b"Original document" in sources["guide.PDF"]
     assert document.file_info.extractor_name == "markitdown"
-    assert document.file_info.extracted_source == sources["guide.PDF"]
     original_hash = document.content_hash
 
     def fail_if_extracted(requests, **kwargs):
-        assert not requests, "Unchanged PDF must use Repowise's parse cache"
+        assert not requests, "Unchanged PDF must use Repowise's document cache"
         return []
 
     with monkeypatch.context() as patch:
-        patch.setattr(seam, "extract_documents_bounded", fail_if_extracted)
-        cached, *_ = _ingest(repository)
+        patch.setattr(source_reader, "extract_documents_bounded", fail_if_extracted)
+        cached, _infos, _structure, cached_sources, *_ = _ingest(repository)
+        assert cached_sources["guide.PDF"] == sources["guide.PDF"]
+        assert source_reader.read_source(repository, "guide.PDF") == sources["guide.PDF"]
     assert next(item for item in cached if item.file_info.path == "guide.PDF").content_hash == (
         original_hash
     )
     pdf.write_bytes(make_pdf("Updated document"))
     changed, _infos, _structure, sources, *_ = _ingest(repository)
     assert b"Updated document" in sources["guide.PDF"]
+    assert source_reader.read_source(repository, "guide.PDF") == sources["guide.PDF"]
     assert next(item for item in changed if item.file_info.path == "guide.PDF").content_hash != (
         original_hash
     )
@@ -74,10 +76,21 @@ def test_plain_init_update_and_deletion_use_original_pdf_paths(repository, tmp_p
     nested_pdf = repository / "documents/guide.PDF"
     nested_pdf.parent.mkdir()
     nested_pdf.write_bytes(make_pdf("Nested PDF"))
+    code = repository / "src"
+    code.mkdir()
+    (code / "sample.py").write_text(
+        "def calculate_total(items: list[int]) -> int:\n    return sum(items)\n",
+        encoding="utf-8",
+    )
+    (code / "app.js").write_text(
+        "export function greet(name) {\n  return `Hello, ${name}`;\n}\n",
+        encoding="utf-8",
+    )
+    expected_paths = {"guide.pdf", "documents/guide.PDF", "src/sample.py", "src/app.js"}
 
     def commit():
         subprocess.run(
-            ["git", "-C", str(repository), "add", "-A", "--", "guide.pdf", "documents"],
+            ["git", "-C", str(repository), "add", "-A", "--", "guide.pdf", "documents", "src"],
             check=True,
         )
         subprocess.run(
@@ -119,6 +132,7 @@ def test_plain_init_update_and_deletion_use_original_pdf_paths(repository, tmp_p
             return {row[0] for row in db.execute("SELECT file_path FROM graph_nodes")}
 
     commit()
+    run("plugins")
     run(
         "init",
         str(repository),
@@ -128,17 +142,20 @@ def test_plain_init_update_and_deletion_use_original_pdf_paths(repository, tmp_p
         "--no-claude-md",
         "--no-hook",
     )
-    assert {"guide.pdf", "documents/guide.PDF"} <= stored_paths()
+    assert expected_paths <= stored_paths()
+    with sqlite3.connect(repository / ".repowise/wiki.db") as db:
+        symbols = {row[0] for row in db.execute("SELECT name FROM wiki_symbols")}
+    assert {"calculate_total", "greet"} <= symbols
     assert root_pdf.read_bytes() == make_pdf("Root PDF")
     root_pdf.write_bytes(make_pdf("Root PDF changed"))
     commit()
     run("update", str(repository), "--index-only")
-    assert {"guide.pdf", "documents/guide.PDF"} <= stored_paths()
+    assert expected_paths <= stored_paths()
     nested_pdf.unlink()
     commit()
     run("update", str(repository), "--index-only")
     assert "documents/guide.PDF" not in stored_paths()
-    assert "guide.pdf" in stored_paths()
+    assert expected_paths - {"documents/guide.PDF"} <= stored_paths()
     assert not (repository / ".repowise-pdfs").exists()
     assert not list(repository.rglob("*.pdf.md"))
 
